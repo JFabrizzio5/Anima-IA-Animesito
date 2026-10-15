@@ -1,0 +1,38 @@
+# animesito -- one origin for the SPA, the API and the gallery files.
+#
+# Hand-maintained (the generated one had no /storage route): gallery files are
+# served straight from the shared storage volume, so a Python worker never
+# spends its time on image bytes.
+{
+	auto_https off
+	admin off
+}
+
+http://localhost:7788, http://127.0.0.1:7788 {
+	encode zstd gzip
+
+	handle /api/* {
+		uri strip_prefix /api
+		# flush_interval -1: server-sent events must not be buffered.
+		reverse_proxy 127.0.0.1:7789 {
+			flush_interval -1
+		}
+	}
+
+	handle /storage/public/* {
+		uri strip_prefix /storage/public
+		root * /srv/storage
+		file_server
+	}
+
+	handle {
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

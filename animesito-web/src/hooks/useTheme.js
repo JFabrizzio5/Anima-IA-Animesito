@@ -1,0 +1,100 @@
+import { useEffect, useState } from 'react'
+
+// Light, dark, or whatever the operating system says. Three states rather than
+// two, because "follow the system" is the only one that stays right when the
+// machine switches at sunset -- and it is the default, so an app offering only
+// a light/dark switch has quietly taken that away.
+//
+// The choice lives in localStorage under one key and is applied by setting
+// `data-theme` on <html>. Everything else -- every colour in every component --
+// follows from the CSS variables that attribute selects, so nothing here has
+// to know what "dark" looks like.
+
+export const THEME_KEY = 'animesito-web:theme'
+export const THEMES = ['light', 'dark', 'system']
+
+const media = window.matchMedia('(prefers-color-scheme: dark)')
+
+export function storedTheme() {
+  try {
+    const value = localStorage.getItem(THEME_KEY)
+    return THEMES.includes(value) ? value : 'system'
+  } catch {
+    // Private browsing, or storage disabled by policy. The app still works;
+    // the choice just does not survive a reload.
+    return 'system'
+  }
+}
+
+export function applyTheme(theme) {
+  const root = document.documentElement
+  if (theme === 'system') {
+    root.removeAttribute('data-theme')
+  } else {
+    root.setAttribute('data-theme', theme)
+  }
+}
+
+// Module scope, with subscribers. One source of truth for the whole app, so a
+// toggle in the header and a radio group in a settings page cannot disagree --
+// which is exactly what happens when each component keeps its own useState.
+let current = storedTheme()
+const listeners = new Set()
+
+function broadcast() {
+  for (const listener of listeners) listener()
+}
+
+media.addEventListener('change', broadcast)
+
+function resolve() {
+  return current === 'system' ? (media.matches ? 'dark' : 'light') : current
+}
+
+// These three are module functions, not hooks: nothing about them depends on
+// the render they were called from, and a service or a router guard has to be
+// able to reach them too.
+export function setTheme(next) {
+  if (!THEMES.includes(next)) return
+  current = next
+  applyTheme(next)
+  try {
+    localStorage.setItem(THEME_KEY, next)
+  } catch {
+    // Nothing to do. The theme is applied; it just will not be remembered.
+  }
+  // Every subscriber, not just the one that called: `resolved` is derived from
+  // `current`, so a component that does not re-render keeps showing the icon
+  // for the theme the page has stopped using.
+  broadcast()
+}
+
+// Toggle flips what is currently on screen and pins it. Someone reaching for
+// the switch wants the other one now, not a three-way cycle that lands them
+// back where they started every third click.
+export function toggleTheme() {
+  setTheme(resolve() === 'dark' ? 'light' : 'dark')
+}
+
+// The way back to the default. `toggleTheme` can only ever pin light or dark,
+// so without something in the UI calling this the first click is permanent and
+// the app has silently dropped one of its three states.
+export function followSystem() {
+  setTheme('system')
+}
+
+export function useTheme() {
+  const [, force] = useState(0)
+
+  useEffect(() => {
+    const listener = () => force((n) => n + 1)
+    listeners.add(listener)
+    return () => listeners.delete(listener)
+  }, [])
+
+  // `resolved` is what is on screen, which is a different question from what
+  // was chosen: an icon showing a moon while the setting is "system" and the
+  // system is light is lying about the current state. Read on every render
+  // rather than stored, so it cannot go stale against `current`.
+  return { theme: current, resolved: resolve(), setTheme, toggleTheme, followSystem }
+}

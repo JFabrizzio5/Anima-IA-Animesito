@@ -1,0 +1,308 @@
+# Artistic styles, ported verbatim from v1's "Anime Classic" (animeClassicGenerator.js,
+# styleDefinitions + the per-style steps/CFG/sampler switch). A1111 sampler names
+# map to ComfyUI as: "Euler a" -> euler_ancestral/normal, "DPM++ 2M Karras" ->
+# dpmpp_2m/karras, "DPM++ SDE Karras" -> dpmpp_sde/karras.
+#
+# A style's `pos` replaces the model family's quality tags and its `neg` replaces
+# the family's default negative (an operator override from Ajustes still applies).
+# v1 sent 1920x1080 / 1080x1920 straight to SDXL; here those styles turn on the
+# hires pass from an SDXL-native size instead, which ends near the same pixels
+# without duplicated limbs.
+
+[[styles]]
+id = "oficial_flat"
+group = "Estilos limpios y anime"
+label = "📺 Anime oficial (ej. KanoKari) · plano, 2D, limpio"
+pos = "masterpiece, best quality, newest, official anime style, flat colors, lineart, simple shading, 2d, highres"
+neg = "3d, realistic, complex shading, gradients, cinematic lighting, bad quality, worst quality, sketch, (bad)"
+steps = 25
+cfg = 5.5
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "clean_anime"
+group = "Estilos limpios y anime"
+label = "✨ Anime limpio equilibrado · Danbooru tags"
+pos = "masterpiece, best quality, newest, absurdres, highres, highly detailed, beautiful lighting"
+neg = "bad quality, worst quality, sketch, (bad)"
+steps = 25
+cfg = 5.5
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "arima_style"
+group = "Estilos limpios y anime"
+label = "🎨 Estilo ArimaAgami · fluido, vibrante, expresivo"
+pos = "masterpiece, best quality, newest, arimaagamiia style, vibrant colors, fluid shading, expressive eyes, dynamic lighting, anime illustration"
+neg = "pale, dull colors, stiff, 3d, realistic, bad quality, worst quality, sketch, (bad)"
+steps = 25
+cfg = 5.5
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "chibi_kawaii"
+group = "Estilos limpios y anime"
+label = "🍡 Chibi / kawaii · cabezas grandes, pastel"
+pos = "masterpiece, best quality, newest, chibi, cute, kawaii, big eyes, small body, pastel colors, simple background, soft shading, adorable"
+neg = "realistic, dark, creepy, horror, bad anatomy, tall, adult proportions"
+steps = 25
+cfg = 5.5
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "retro_90s"
+group = "Estilos limpios y anime"
+label = "📼 Retro 90s · anime clásico VHS"
+pos = "masterpiece, best quality, 1990s (style), retro anime, old school anime, cel shading, vhs aesthetic, muted colors"
+neg = "modern anime, 3d, realistic, digital painting, complex shading, bad quality, worst quality, newest, sketch, (bad)"
+steps = 25
+cfg = 5.5
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "studio_ghibli"
+group = "Estilos limpios y anime"
+label = "🌱 Studio Ghibli · mágico, paisajes pintorescos"
+pos = "masterpiece, best quality, newest, studio ghibli style, magical, beautiful detailed scenery, picturesque, traditional media, highly detailed background"
+neg = "dark, scary, bad quality, worst quality, sketch, (bad), lowres, messy"
+steps = 25
+cfg = 5.5
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "waifu_ultra"
+group = "Iluminación y detalles"
+label = "👑 Waifu ultra detallada · CG 8k, ojos brillantes"
+pos = "masterpiece, best quality, absurdres, intricate details, highly detailed face, beautiful eyes, glowing lighting, extremely detailed CG unity 8k wallpaper"
+neg = "bad anatomy, missing fingers, bad quality, worst quality, sketch, flat colors"
+steps = 35
+cfg = 6.5
+sampler = "dpmpp_sde"
+scheduler = "karras"
+hires = true
+
+[[styles]]
+id = "ultra_hd"
+group = "Iluminación y detalles"
+label = "💎 Ultra 4K / 8K · máximo detalle, ilustración HD"
+pos = "masterpiece, best quality, newest, ultra high res, 8k resolution, absurdres, highly detailed illustration, complex background, intricate, volumetric lighting"
+neg = "simple, blank background, bad quality, worst quality, sketch, (bad), lowres"
+steps = 40
+cfg = 6.0
+sampler = "dpmpp_2m"
+scheduler = "karras"
+hires = true
+
+[[styles]]
+id = "rtx_lighting"
+group = "Iluminación y detalles"
+label = "🌟 Iluminación RTX / anime 3D · ray tracing"
+pos = "masterpiece, best quality, newest, ray tracing, 3d shading, realistic lighting, shadows, highly detailed, octane render style, unity engine"
+neg = "2d, flat colors, anime screencap, simple shading, bad quality, worst quality, sketch, (bad)"
+steps = 35
+cfg = 6.5
+sampler = "dpmpp_sde"
+scheduler = "karras"
+width = 1216
+height = 832
+hires = true
+
+[[styles]]
+id = "cyberpunk_neon"
+group = "Iluminación y detalles"
+label = "🌃 Cyberpunk neón · contrastes fuertes"
+pos = "masterpiece, best quality, newest, cyberpunk, neon lights, glowing, dark background, highly detailed city, high contrast, futuristic"
+neg = "nature, forest, fantasy, medieval, bright daylight, bad quality, worst quality, sketch, (bad)"
+steps = 35
+cfg = 6.5
+sampler = "dpmpp_sde"
+scheduler = "karras"
+width = 1216
+height = 832
+hires = true
+
+[[styles]]
+id = "cinematic_hd"
+group = "Iluminación y detalles"
+label = "🎬 Cinemático HD · luces dramáticas, sombras profundas"
+pos = "masterpiece, best quality, newest, ultra detailed, cinematic lighting, dramatic shadows, intricate details, highly detailed face and eyes, 4k resolution, glowing lighting, depth of field"
+neg = "flat colors, anime screencap, simple shading, 2d style, bright, daylight, bad quality, worst quality, sketch, (bad)"
+steps = 35
+cfg = 6.5
+sampler = "dpmpp_sde"
+scheduler = "karras"
+width = 1216
+height = 832
+hires = true
+
+[[styles]]
+id = "mecha_scifi"
+group = "Iluminación y detalles"
+label = "🤖 Mecha / sci-fi · armaduras, futurista"
+pos = "masterpiece, best quality, newest, mecha, sci-fi, robotic, highly detailed machinery, glowing neon lights, metallic texture, intricate armor, futuristic"
+neg = "fantasy, nature, old fashioned, bad quality, worst quality, sketch, (bad)"
+steps = 35
+cfg = 6.5
+sampler = "dpmpp_sde"
+scheduler = "karras"
+width = 1216
+height = 832
+hires = true
+
+[[styles]]
+id = "dark_fantasy"
+group = "Iluminación y detalles"
+label = "🦇 Fantasía oscura · gótico, misterioso"
+pos = "masterpiece, best quality, newest, dark fantasy, gothic, gloomy, intense shadows, mysterious, highly detailed, dramatic lighting"
+neg = "bright, cheerful, pastel colors, daylight, bad quality, worst quality, sketch, (bad)"
+steps = 35
+cfg = 6.5
+sampler = "dpmpp_sde"
+scheduler = "karras"
+width = 1216
+height = 832
+hires = true
+
+[[styles]]
+id = "cozy_soft"
+group = "Atmosféricos y temáticos"
+label = "☕ Acogedor y suave · pastel, luz cálida"
+pos = "masterpiece, best quality, newest, cozy atmosphere, soft lighting, pastel colors, warm lighting, gentle, relaxing, soft painting, watercolor aesthetics"
+neg = "dark, gloomy, horror, high contrast, sharp lines, bad quality, worst quality, sketch, (bad)"
+steps = 30
+cfg = 5.5
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "cozy_lighting"
+group = "Atmosféricos y temáticos"
+label = "🌅 Atardecer cálido · sombras largas, luz dorada"
+pos = "masterpiece, best quality, newest, sunset lighting, golden hour, long shadows, highly detailed shadows, warm sunlight, beautiful lighting, cinematic lighting, lens flare, cozy atmosphere, extremely detailed environment"
+neg = "dark, gloomy, horror, bad quality, worst quality, sketch, (bad), plain background, flat colors, cold light"
+steps = 30
+cfg = 5.5
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "gothic_lolita"
+group = "Atmosféricos y temáticos"
+label = "🥀 Moda gótica · vestidos de encaje, sombrío"
+pos = "masterpiece, best quality, newest, gothic lolita, dark fantasy, black lace dress, pale skin, intricate clothing details, gloomy atmosphere, beautiful eyes, cinematic lighting"
+neg = "cheerful, bright, pastel, simple shading, bad quality, worst quality, sketch, (bad)"
+steps = 35
+cfg = 6.5
+sampler = "dpmpp_sde"
+scheduler = "karras"
+hires = true
+
+[[styles]]
+id = "magical_girl"
+group = "Atmosféricos y temáticos"
+label = "🪄 Chica mágica (mahou shoujo) · brillos, aura"
+pos = "masterpiece, best quality, newest, magical girl, sparkly, glowing magic, highly detailed ornate uniform, dynamic pose, vibrant colors, magical aura, starry background"
+neg = "dark, grim, scary, boring, bad quality, worst quality, sketch, (bad)"
+steps = 30
+cfg = 5.5
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "lineartless"
+group = "Atmosféricos y temáticos"
+label = "🖌️ Pintura suave (sin líneas) · acuarela"
+pos = "masterpiece, best quality, newest, soft painting, watercolor, no lineart, lineless, smooth, gentle lighting"
+neg = "sharp lines, lineart, ink, cel shading, bad quality, worst quality, sketch, (bad)"
+steps = 25
+cfg = 5.5
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "action_violent"
+group = "Atmosféricos y temáticos"
+label = "⚔️ Acción · dinámico, épico"
+pos = "masterpiece, best quality, newest, action scene, violent, dynamic pose, blood, epic lighting, highly detailed combat, intense"
+neg = "peaceful, calm, sitting, bad quality, worst quality, sketch, (bad)"
+steps = 35
+cfg = 7.0
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "sketch_simple"
+group = "Atmosféricos y temáticos"
+label = "✏️ Boceto simple · líneas sueltas"
+pos = "masterpiece, best quality, sketch, pencil drawing, simple lines, rough sketch, unfinished aesthetic, monochrome"
+neg = "colored, highly detailed, realistic, bad quality, worst quality"
+steps = 20
+cfg = 7.0
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "manga_comic"
+group = "Atmosféricos y temáticos"
+label = "📖 Manga blanco y negro · tramas, entintado"
+pos = "masterpiece, best quality, newest, manga style, monochrome, greyscale, screentones, halftone, ink, lineart, comic book style, highly detailed"
+neg = "colored, vivid colors, realistic, 3d, complex shading, bad quality, worst quality"
+steps = 25
+cfg = 5.5
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "pixel_art"
+group = "Atmosféricos y temáticos"
+label = "👾 Pixel art retro · 16 bits"
+pos = "masterpiece, best quality, 16-bit, pixel art, retro game, low res aesthetic, sharp pixels, pixelated"
+neg = "high res, smooth, realistic, 3d, gradient, soft shading, blur"
+steps = 30
+cfg = 7.0
+sampler = "euler_ancestral"
+scheduler = "normal"
+width = 1024
+height = 1024
+
+[[styles]]
+id = "selfie_simulation"
+group = "Atmosféricos y temáticos"
+label = "📱 Selfie ultra detallada · cámara de teléfono"
+pos = "masterpiece, best quality, newest, photorealistic anime, selfie, holding phone, front camera, ultra detailed face, depth of field, bokeh, highly detailed eyes, glowing lighting, beautiful background"
+neg = "bad quality, worst quality, sketch, (bad), bad anatomy, extra limbs, ugly, 3d, fake"
+steps = 30
+cfg = 6.0
+sampler = "dpmpp_2m"
+scheduler = "karras"
+width = 768
+height = 1344
+
+[[styles]]
+id = "classic_default"
+group = "Personalizados"
+label = "⚙️ Sistema anterior (clásico) · CFG 7, 20 pasos"
+pos = "(masterpiece, best quality:1.2), ultra detailed"
+neg = "(worst quality, low quality:1.4), (zombie, sketch, interlocked fingers, comic), bad anatomy"
+steps = 20
+cfg = 7.0
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[[styles]]
+id = "custom_prev"
+group = "Personalizados"
+label = "⭐ Personalizado (tu imagen anterior) · CFG 6, 42 pasos"
+pos = "masterpiece, best quality, newest, high quality anime illustration"
+neg = "bad quality, worst quality, sketch, (bad), lowres"
+steps = 42
+cfg = 6.0
+sampler = "euler_ancestral"
+scheduler = "normal"
+hires = true

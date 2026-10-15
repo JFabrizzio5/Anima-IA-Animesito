@@ -1,0 +1,126 @@
+# Animesito configuration.
+# Committed to git -- never put secrets here. Secrets and machine-specific
+# paths (JFAST_COMFY_MODELS_DIR) come from the environment / .env.
+
+[app]
+name = "animesito"
+version = "0.2.0"
+# No `env` here: JFAST_ENV belongs to the deployment. Defaults to "local".
+port = 7789
+timezone = "UTC"
+# The Vite dev server. Production serves one origin through Caddy.
+cors_origins = ["http://localhost:7799", "http://127.0.0.1:7799"]
+
+[plugins]
+enabled = [
+  "observability",
+  "metrics",
+  "database",
+  "cache",
+  "queue",
+  "storage",
+  "comfy",
+  "jobs",
+  "localguard",
+  "prompts",
+  "assistant",
+]
+disabled = []
+
+# In-repo plugins. Loaded the same way by the API and by `jfast worker`.
+[plugins.paths]
+comfy = "modules.engine.plugin:ComfyPlugin"
+jobs = "modules.jobs.plugin:JobsPlugin"
+localguard = "modules.system.plugin:LocalGuardPlugin"
+prompts = "modules.prompts.plugin:PromptsPlugin"
+assistant = "modules.assistant.plugin:AssistantPlugin"
+
+[plugin.observability]
+level = "INFO"
+json_logs = false
+
+[plugin.database]
+pool_size = 5
+max_overflow = 5
+server_max_connections = 100
+session_timezone = "UTC"
+
+[plugin.cache]
+default_ttl = 300
+
+[plugin.queue]
+# Only short tasks run here (ingesting outputs into the gallery). Renders are
+# fed to ComfyUI by the dispatcher in modules/jobs, not by this queue.
+backend = "redis"
+name = "animesito_jobs"
+max_attempts = 3
+visibility_timeout = 300
+
+[plugin.storage]
+default = "public"
+serve_local = true
+
+[plugin.storage.disks.public]
+driver = "local"
+root = "storage/public"
+visibility = "public"
+
+[plugin.comfy]
+# ComfyUI runs natively on Windows. With WSL in mirrored networking this is
+# the same 127.0.0.1. JFAST_COMFY_URL overrides it.
+url = "http://127.0.0.1:8188"
+timeout = 30.0
+
+[plugin.jobs]
+dispatcher = true
+tick_seconds = 1.0
+lock_ttl = 15
+
+[plugin.localguard]
+require_header = true
+
+[plugin.prompts]
+timeout = 10.0
+
+[plugin.assistant]
+# Ollama runs natively on Windows (127.0.0.1 with WSL mirrored networking).
+url = "http://127.0.0.1:11434"
+default_model = "dolphin-mistral:latest"
+keep_alive = "0"
+max_model_gb = 10.0
+
+[modules.engine]
+layout = "modular"
+ui = "api"
+
+[modules.gallery]
+layout = "modular"
+ui = "api"
+
+[modules.generation]
+layout = "modular"
+ui = "api"
+
+[modules.jobs]
+layout = "modular"
+ui = "api"
+
+[modules.policy]
+layout = "modular"
+ui = "api"
+
+[modules.system]
+layout = "modular"
+ui = "api"
+
+[modules.prompts]
+layout = "modular"
+ui = "api"
+
+[modules.assistant]
+layout = "modular"
+ui = "api"
+
+[modules.settings]
+layout = "modular"
+ui = "api"

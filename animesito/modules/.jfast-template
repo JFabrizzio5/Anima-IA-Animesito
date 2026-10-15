@@ -1,0 +1,20 @@
+{
+  "templates": {
+    "module_modular": {
+      "framework_version": "0.1.0a12",
+      "context": {
+        "module": "item",
+        "Module": "Item",
+        "module_title": "Item",
+        "module_plural": "items",
+        "table": "items",
+        "layout": "modular",
+        "ui": "api",
+        "modules_dir": "modules",
+        "access": "open",
+        "example": true,
+        "bare": false
+      }
+    }
+  }
+}

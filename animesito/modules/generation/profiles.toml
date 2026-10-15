@@ -1,0 +1,118 @@
+# How each model family wants to be prompted and sampled.
+#
+# Ported from v1's enrichCkptPrompt (public/js/utils.js), corrected where v1
+# was wrong: NoobAI does not use Pony's score tags, and the NoobAI file is
+# v-prediction (detected from its header, not configured here).
+#
+# quality / negative     prepended when the user keeps "quality tags" on
+# adult_tags             prepended in adult mode, after the policy's anchor
+# safe_tags              prepended in safe mode
+# safe_negative          appended to the negative in safe mode
+# The policy module adds its minor-safety negative to every family.
+
+[families.illustrious]
+label = "Illustrious / WAI (anime)"
+workflow = "sdxl_txt2img"
+quality = "masterpiece, best quality, amazing quality, very aesthetic, absurdres"
+negative = "bad quality, worst quality, worst detail, lowres, bad anatomy, bad hands, extra digits, fewer digits, jpeg artifacts, watermark, signature"
+adult_tags = "nsfw, uncensored"
+safe_tags = "general"
+safe_negative = "nsfw, nude, explicit, nipples"
+steps = 28
+cfg = 6.0
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[families.noobai]
+label = "NoobAI (anime)"
+workflow = "sdxl_txt2img"
+quality = "masterpiece, best quality, newest, absurdres, highres"
+negative = "worst quality, old, early, low quality, lowres, signature, username, logo, bad hands, mutated hands"
+adult_tags = "nsfw, explicit"
+safe_tags = "general"
+safe_negative = "nsfw, explicit, nude, nipples"
+steps = 30
+cfg = 5.0
+sampler = "euler"
+scheduler = "normal"
+
+[families.pony]
+label = "Pony (anime)"
+workflow = "sdxl_txt2img"
+quality = "score_9, score_8_up, score_7_up, source_anime"
+negative = "score_4, score_5, score_6, ugly, poorly drawn, bad anatomy, bad hands, missing fingers"
+adult_tags = "rating_explicit"
+safe_tags = "rating_safe"
+safe_negative = "rating_explicit, rating_questionable, nsfw, nude"
+steps = 25
+cfg = 7.0
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[families.pony_real]
+label = "Pony realista"
+workflow = "sdxl_txt2img"
+quality = "score_9, score_8_up, score_7_up, source_photorealistic, RAW photo, photorealistic, detailed skin texture, natural lighting"
+negative = "score_4, score_5, score_6, flat 2d, illustration, cartoon, drawing, anime, sketch, ugly, bad anatomy, bad hands, 3d, cg"
+adult_tags = "rating_explicit"
+safe_tags = "rating_safe"
+safe_negative = "rating_explicit, nsfw, nude"
+steps = 28
+cfg = 6.0
+sampler = "dpmpp_2m"
+scheduler = "karras"
+
+[families.animagine]
+label = "Animagine XL (anime)"
+workflow = "sdxl_txt2img"
+quality = "masterpiece, best quality, very aesthetic, absurdres"
+negative = "lowres, (bad), text, error, fewer, extra, missing, worst quality, jpeg artifacts, low quality, watermark, unfinished, displeasing, oldest, early, chromatic aberration, signature, extra digits, artistic error, username, scan, abstract"
+adult_tags = "nsfw, explicit"
+safe_tags = "safe"
+safe_negative = "nsfw, explicit, nude"
+steps = 28
+cfg = 5.0
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[families.anime_sdxl]
+label = "SDXL anime"
+workflow = "sdxl_txt2img"
+quality = "masterpiece, best quality, newest, absurdres"
+negative = "worst quality, low quality, lowres, bad anatomy, bad hands, watermark, signature"
+adult_tags = "nsfw"
+safe_tags = ""
+safe_negative = "nsfw, nude, explicit"
+steps = 28
+cfg = 6.0
+sampler = "euler_ancestral"
+scheduler = "normal"
+
+[families.realistic]
+label = "SDXL realista"
+workflow = "sdxl_txt2img"
+quality = "RAW photo, photorealistic, highly detailed, sharp focus, natural lighting"
+negative = "worst quality, bad quality, deformed, ugly, bad anatomy, cartoon, anime, illustration, 3d render, watermark"
+adult_tags = "nsfw"
+safe_tags = ""
+safe_negative = "nsfw, nude, naked, explicit"
+steps = 30
+cfg = 5.0
+sampler = "dpmpp_2m_sde"
+scheduler = "karras"
+
+[families.flux]
+label = "Flux dev (GGUF)"
+workflow = "flux_txt2img"
+quality = ""
+negative = ""
+adult_tags = ""
+safe_tags = ""
+safe_negative = ""
+steps = 20
+cfg = 3.5          # FluxGuidance, not classifier-free guidance
+sampler = "euler"
+scheduler = "simple"
+# Applied in adult mode when installed (v1 did the same).
+adult_lora = "flux_lustly-ai_v1.safetensors"
+adult_lora_strength = 0.85

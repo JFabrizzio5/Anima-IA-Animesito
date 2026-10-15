@@ -1,0 +1,6 @@
+# LF everywhere: this repo lives in WSL, and a Windows git/IDE with
+# core.autocrlf=true would otherwise rewrite scripts/*.sh to CRLF.
+* text=auto eol=lf
+*.png binary
+*.webp binary
+*.jpg binary

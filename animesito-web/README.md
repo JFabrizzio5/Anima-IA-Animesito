@@ -1,0 +1,107 @@
+# Animesito Web
+
+React + Vite + Tailwind v4 frontend for the **animesito** workspace.
+
+## Run
+
+```bash
+npm install
+npm run dev        # http://localhost:7799
+```
+
+`VITE_API_URL` is already set to `http://localhost:7789` in `.env`, written from
+`jfast.workspace.toml`. The home page calls `/health` through it on load, so a
+wrong value shows up immediately rather than on your first real feature.
+
+Regenerate it after adding or moving a backend:
+
+```bash
+jfast workspace env
+```
+
+## Add a module
+
+```bash
+jfast new view Facturas
+```
+
+Creates, and wires up:
+
+```
+src/ModuloFacturas/
+├── Components/
+│   ├── Modals/
+│   └── Tables/
+├── Pages/FacturasView.jsx
+├── Routes/router.jsx
+└── Services/facturas.service.js
+```
+
+then splices the route into `src/router/index.jsx` at the `/*nuevaRuta*/` marker
+and the sidebar entry into `src/menuAside.js` at `/*nuevoModulo*/`.
+
+**Keep both markers.** Remove one and the generator fails with a message
+naming the file, instead of silently doing nothing.
+
+Running it twice is safe: an already-registered module is detected and skipped,
+so you do not get duplicate routes or duplicate sidebar entries.
+
+## Conventions
+
+- Function components and hooks. No class components.
+- HTTP calls in `Services/`, never in components. They use the shared axios
+  instance from `@/services/api.js`, which already turns the backend's RFC 7807
+  `detail` into `error.message`.
+- Shared state in a Zustand store, one per domain. Anything a single component
+  owns stays in `useState` -- see [State](#state).
+- Components `PascalCase.jsx`; route-level pages end in `View.jsx`.
+- Tailwind utilities only. Design tokens live in `@theme` in `src/style.css` --
+  add a token there before using a value, never a raw hex in a component.
+
+## State
+
+Zustand. A store is a hook you import; there is no provider to add and nothing
+to wrap `main.jsx` in, which is also why non-React code can read one.
+
+| Store | Owns |
+| --- | --- |
+| `src/stores/auth.store.js` | The session: token, current user |
+| `src/stores/notification.store.js` | The toast list behind `useToast()` |
+
+```jsx
+const user = useAuthStore((state) => state.user)   // in a component
+useAuthStore.getState().logout()                   // anywhere else
+```
+
+Select the field, not the store: `useAuthStore((state) => state.user)`
+re-renders when the user changes, `useAuthStore()` re-renders on every write to
+anything.
+
+**Do not open a store for** a form field, whether a modal is open, a hover or
+loading flag, or anything else one component owns -- `useState` is shorter and
+dies with the component. Nor for data the server owns: that belongs to the
+`Services/` call that fetched it, and caching it in a store means deciding when
+it went stale. A store earns its place when two components with no shared
+parent need the same value, or when code that cannot call a hook -- a service,
+the axios interceptor -- has to read or change it.
+
+The token lives in `localStorage` under `animesito-web.token`, which is
+what `src/services/api.js` reads to sign each request. The auth store hydrates
+from that key and owns every write to it; nothing else should touch it.
+
+`useToast()` returns the shared list, so a toast raised inside a service shows
+up next to one raised in a component. Rendering them is yours to write: read
+`toasts` in a component near the root of `LayoutAuthenticated` and call
+`dismiss(id)` from its close button.
+
+## Structure
+
+| Path | Holds |
+| --- | --- |
+| `src/Modulo<Name>/` | One feature: pages, components, routes, services |
+| `src/components/` | Shared presentational components |
+| `src/layouts/` | Page shells |
+| `src/stores/` | Cross-feature state: `auth`, `notification` |
+| `src/services/api.js` | The single axios instance |
+| `src/router/index.jsx` | Route table, with the generator marker |
+| `src/menuAside.js` | Sidebar, with the generator marker |

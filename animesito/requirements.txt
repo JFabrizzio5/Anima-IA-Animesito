@@ -1,0 +1,4 @@
+# Generated from the framework version that scaffolded this service. While
+# the framework is a pre-release the pin is exact, because the API moves;
+# once it is stable this becomes a compatible-release pin.
+jfastframework[cache,db,metrics,queue,server,storage]==0.1.0a12

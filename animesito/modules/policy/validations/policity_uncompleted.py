@@ -1,0 +1,216 @@
+"""Content rules applied server-side to every generation.
+
+Pure functions over strings: no database, no request, no clock. The routes and
+the generation service call them; nothing the browser sends can skip them.
+
+Two lines this project does not cross, whatever the toggle says:
+
+* sexual content involving minors -- terms that describe one and characters
+  who are canonically under age are refused when adult content is on, and
+  the negative prompt always pushes away from childlike anatomy;
+* adult edits of images the app did not generate -- that is how a real
+  person's photo gets "undressed", so adult mode only edits app output.
+
+The lists below only grow, and there is no switch to turn the check off. The
+self-check at the bottom of this file runs on import: if the lists are cut or
+the check stops refusing, the service does not start. Twice on 2026-10-09 an
+editor agent emptied these lists (the second time adding a skip flag); this is
+what turns that into a failed boot instead of a silent hole.
+"""
+
+from __future__ import annotations
+
+import re
+from collections.abc import Iterable
+
+from jfastframework.errors import ValidationError
+
+#: Appended to every negative prompt, adult mode or not.
+MINOR_NEGATIVE = (
+    "child, loli, shota, toddler, kid, underage, teen, young child, "
+    "childlike body, petite child body, aged down"
+)
+
+#: Prepended to the positive prompt in adult mode, after the quality tags.
+ADULT_ANCHOR = "adult, mature"
+
+# Refused in adult mode. Matched as whole words on a normalised prompt, so
+# "kidney" or "skidding" never trip "kid".
+MINOR_TERMS: tuple[str, ...] = (
+    "loli",
+    "lolicon",
+    "lolita",
+    "shota",
+    "shotacon",
+    "child",
+    "children",
+    "childlike",
+    "kid",
+    "kids",
+    "toddler",
+    "infant",
+    "baby",
+    "underage",
+    "under age",
+    "minor",
+    "preteen",
+    "pre teen",
+    "teen",
+    "teens",
+    "teenage",
+    "teenager",
+    "young girl",
+    "young boy",
+    "little girl",
+    "little boy",
+    "schoolgirl",
+    "schoolboy",
+    "school uniform",
+    "school swimsuit",
+    "serafuku",
+    "randoseru",
+    "elementary school",
+    "middle school",
+    "junior high",
+    "kindergarten",
+    "aged down",
+    "age regression",
+)
+
+# Characters who are canonically under age, refused in adult mode. Seeded with
+# the ones v1's templates used plus frequent cases; extend it, never shrink it.
+# The prompts module adds more at run time from AniList ages.
+MINOR_CHARACTERS: tuple[str, ...] = (
+    "uraraka ochako",
+    "hayase nagatoro",
+    "kitagawa marin",
+    "nakano miku",
+    "nakano ichika",
+    "nakano nino",
+    "nakano yotsuba",
+    "nakano itsuki",
+    "videl",
+    "hatsune miku",
+    "anya forger",
+    "kamado nezuko",
+    "souryuu asuka langley",
+    "asuka langley soryu",
+    "asuka langley",
+    "ayanami rei",
+    "komi shouko",
+    "shinomiya kaguya",
+    "fujiwara chika",
+    "megumin",
+)
+
+_SEPARATORS = re.compile(r"[\s_\-,.;:()\[\]{}<>|/\\\\]+")
+_WEIGHT = re.compile(r":\s*\d+(\.\d+)?")
+
+
+def normalise(text: str) -> str:
+    """Lowercase, drop prompt weights, collapse booru separators to spaces."""
+    without_weights = _WEIGHT.sub(" ", text.lower())
+    return f" {_SEPARATORS.sub(' ', without_weights).strip()} "
+
+
+def _name_variants(name: str) -> Iterable[str]:
+    parts = name.split()
+    yield " ".join(parts)
+    if len(parts) == 2:
+        # Booru tags are surname-first, people often type given-name-first.
+        yield f"{parts[1]} {parts[0]}"
+
+
+def find_minor_terms(text: str, extra: Iterable[str] = ()) -> list[str]:
+    """Static list plus ``extra`` (terms the operator added in Ajustes)."""
+    haystack = normalise(text)
+    terms = dict.fromkeys([*MINOR_TERMS, *(normalise(term).strip() for term in extra)])
+    return [term for term in terms if term and f" {term} " in haystack]
+
+
+def find_minor_characters(text: str, extra: Iterable[str] = ()) -> list[str]:
+    """Static list plus ``extra`` (names learned from AniList ages)."""
+    haystack = normalise(text)
+    names = dict.fromkeys([*MINOR_CHARACTERS, *(normalise(name).strip() for name in extra)])
+    return [
+        name
+        for name in names
+        if name and any(f" {variant} " in haystack for variant in _name_variants(name))
+    ]
+
+
+def ensure_prompt_allowed(
+    prompt: str,
+    *,
+    adult: bool,
+    extra_minor_characters: Iterable[str] = (),
+    extra_terms: Iterable[str] = (),
+) -> None:
+    """Refuse an adult prompt that describes or names a minor."""
+    if not adult:
+        return
+    terms = find_minor_terms(prompt, extra_terms)
+    characters = find_minor_characters(prompt, extra_minor_characters)
+    if terms or characters:
+        found = ", ".join([*terms, *characters])
+        raise ValidationError(
+            f"Adult mode cannot be used with minors or under-age characters ({found}). "
+            "Remove them or turn adult mode off."
+        )
+
+
+def ensure_edit_source_allowed(*, adult: bool, generated_by_app: bool) -> None:
+    """Adult edits only on images this app generated (checked by content hash)."""
+    if adult and not generated_by_app:
+        raise ValidationError(
+            "Adult edits are only allowed on images generated by Animesito. "
+            "Uploaded images can be edited with adult mode off."
+        )
+
+
+def with_minor_negative(negative: str, extra: str = "") -> str:
+    """The mandatory negative (base plus operator additions) before ``negative``."""
+    mandatory = ", ".join(part for part in (MINOR_NEGATIVE, extra.strip().strip(",")) if part)
+    negative = negative.strip().strip(",").strip()
+    return f"{mandatory}, {negative}" if negative else mandatory
+
+
+# -- integrity ---------------------------------------------------------------
+
+REQUIRED_TERMS = frozenset(
+    {"loli", "shota", "child", "kid", "underage", "teen", "school uniform", "minor"}
+)
+REQUIRED_CHARACTERS = frozenset(
+    {"uraraka ochako", "hayase nagatoro", "kitagawa marin", "nakano miku", "hatsune miku"}
+)
+_CANARIES = ("1girl, loli, nude", "1girl, uraraka ochako, nude", "1girl, teenager, bedroom")
+
+
+class PolicyTampered(RuntimeError):
+    """The minor-safety rules were weakened; the service must not run like this."""
+
+
+def assert_policy_intact() -> None:
+    """Fail closed: refuse to load when the lists are cut or the check is inert."""
+    problems: list[str] = []
+    if not set(MINOR_TERMS) >= REQUIRED_TERMS or len(MINOR_TERMS) < 38:
+        problems.append("MINOR_TERMS was cut")
+    if not set(MINOR_CHARACTERS) >= REQUIRED_CHARACTERS or len(MINOR_CHARACTERS) < 20:
+        problems.append("MINOR_CHARACTERS was cut")
+    if not all(term in MINOR_NEGATIVE for term in ("child", "loli", "shota", "underage")):
+        problems.append("MINOR_NEGATIVE was cut")
+    for canary in _CANARIES:
+        try:
+            ensure_prompt_allowed(canary, adult=True)
+        except ValidationError:
+            continue
+        problems.append(f"adult prompt {canary!r} was not refused")
+    if problems:
+        raise PolicyTampered(
+            "Animesito will not start: the minor-safety policy was weakened ("
+            + "; ".join(problems)
+            + "). Restore modules/policy/validations/policy_rules.py from git."
+        )
+
+
+assert_policy_intact()

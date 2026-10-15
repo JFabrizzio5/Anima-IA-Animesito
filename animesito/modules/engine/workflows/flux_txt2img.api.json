@@ -1,0 +1,85 @@
+{
+  "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": { "unet_name": "flux1-dev-Q5_K_S.gguf" },
+    "_meta": { "title": "@unet" }
+  },
+  "2": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+      "clip_name1": "t5xxl_fp8_e4m3fn_scaled.safetensors",
+      "clip_name2": "clip_l.safetensors",
+      "type": "flux"
+    },
+    "_meta": { "title": "@clip" }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": { "vae_name": "ae.safetensors" },
+    "_meta": { "title": "@vae" }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": { "text": "", "clip": ["2", 0] },
+    "_meta": { "title": "@positive" }
+  },
+  "5": {
+    "class_type": "FluxGuidance",
+    "inputs": { "guidance": 3.5, "conditioning": ["4", 0] },
+    "_meta": { "title": "@guidance" }
+  },
+  "6": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": { "width": 832, "height": 1216, "batch_size": 1 },
+    "_meta": { "title": "@latent" }
+  },
+  "7": {
+    "class_type": "ModelSamplingFlux",
+    "inputs": {
+      "model": ["1", 0],
+      "max_shift": 1.15,
+      "base_shift": 0.5,
+      "width": 832,
+      "height": 1216
+    },
+    "_meta": { "title": "@model_sampling" }
+  },
+  "8": {
+    "class_type": "BasicGuider",
+    "inputs": { "model": ["7", 0], "conditioning": ["5", 0] }
+  },
+  "9": {
+    "class_type": "KSamplerSelect",
+    "inputs": { "sampler_name": "euler" },
+    "_meta": { "title": "@sampler_select" }
+  },
+  "10": {
+    "class_type": "BasicScheduler",
+    "inputs": { "model": ["7", 0], "scheduler": "simple", "steps": 20, "denoise": 1.0 },
+    "_meta": { "title": "@scheduler" }
+  },
+  "11": {
+    "class_type": "RandomNoise",
+    "inputs": { "noise_seed": 0 },
+    "_meta": { "title": "@noise" }
+  },
+  "12": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["11", 0],
+      "guider": ["8", 0],
+      "sampler": ["9", 0],
+      "sigmas": ["10", 0],
+      "latent_image": ["6", 0]
+    }
+  },
+  "13": {
+    "class_type": "VAEDecode",
+    "inputs": { "samples": ["12", 0], "vae": ["3", 0] }
+  },
+  "14": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["13", 0], "filename_prefix": "animesito/img" },
+    "_meta": { "title": "@save" }
+  }
+}

@@ -1,0 +1,285 @@
+"""Alembic environment for Animesito.
+
+Three things this does that a stock ``alembic init`` does not:
+
+1. **Reads the DSN from the application's own settings**, not from
+   ``alembic.ini``. A migration that can run against a different database than
+   the service is a migration that will, eventually, at the worst moment.
+
+2. **Imports every module's models automatically.** Autogenerate only sees
+   tables whose classes have been imported; a forgotten import silently
+   produces an empty migration, and the missing table is discovered in
+   production. Walking ``modules/`` removes that footgun -- and works for both
+   the layered layout (``models.py``) and the screaming one (``storage.py``).
+
+3. **Repairs the one thing autogenerate reliably gets wrong, and announces the
+   ones it cannot.** See ``_process_revision_directives`` below.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import enum
+import importlib
+import pkgutil
+from collections.abc import Iterator
+from logging.config import fileConfig
+from pathlib import Path
+from typing import Any, Literal
+
+import sqlalchemy as sa
+from alembic import context
+from alembic.autogenerate.api import AutogenContext
+from alembic.operations import ops
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
+
+from jfastframework.db import Base
+from jfastframework.db.framework import include_name
+from jfastframework.plugins.builtin.database import DatabaseSettings
+
+config = context.config
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+
+def _import_module_models() -> None:
+    """Import the table definitions under modules/ so they register.
+
+    One filename per layout: layered writes models.py, modular a models/
+    package, screaming storage.py, hexagonal infrastructure/orm.py. Every one
+    is listed. Relying on a package __init__ to drag its own ORM in works
+    until somebody makes that import lazy, and the failure is an empty
+    migration rather than an error.
+    """
+    root = Path(__file__).resolve().parent.parent
+    modules_path = root / "modules"
+    if not modules_path.is_dir():
+        return
+
+    for package in pkgutil.iter_modules([str(modules_path)]):
+        if not package.ispkg:
+            continue
+        for candidate in ("models", "storage", "infrastructure.orm"):
+            name = f"modules.{package.name}.{candidate}"
+            try:
+                importlib.import_module(name)
+            except ModuleNotFoundError as exc:
+                # The layout that does not use this filename is expected to be
+                # absent, and so is any package on the way to it. A genuine
+                # error inside the module is not, and must not be swallowed
+                # into an empty migration.
+                expected = {
+                    f"modules.{package.name}",
+                    *(f"modules.{package.name}.{part}" for part in _prefixes(candidate)),
+                }
+                if exc.name not in expected:
+                    raise
+
+
+def _prefixes(dotted: str) -> list[str]:
+    """`a.b.c` -> `a`, `a.b`, `a.b.c`: every package an import walks through."""
+    parts = dotted.split(".")
+    return [".".join(parts[: i + 1]) for i in range(len(parts))]
+
+
+_import_module_models()
+target_metadata = Base.metadata
+
+
+def _database_url() -> str:
+    return DatabaseSettings().dsn.get_secret_value()
+
+
+# Read by script.py.mako when it renders the revision. Handed to Alembic by
+# reference, so the hook below can still fill it in after `configure()`.
+_HINTS: dict[str, list[str]] = {"renames": [], "unsafe": []}
+
+
+def _sql_literal(value: object) -> str | None:
+    """``value`` as a SQL literal, or None when there is no honest one.
+
+    Deliberately narrow. A default this cannot express is reported rather than
+    guessed at: a wrong backfill is worse than a migration that stops.
+    """
+    if isinstance(value, enum.Enum):
+        value = value.value
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int | float):
+        return repr(value)
+    if isinstance(value, str):
+        escaped = value.replace("'", "''")
+        return f"'{escaped}'"
+    return None
+
+
+def _backfill_for(column: sa.Column[Any]) -> str | None:
+    """The SQL literal a new NOT NULL column can be backfilled with."""
+    if column.nullable or column.server_default is not None:
+        return None
+    default = column.default
+    if not isinstance(default, sa.ColumnDefault) or not default.is_scalar:
+        # A callable default (uuid4, a factory) runs in Python, per row. There
+        # is no SQL equivalent to put in a server_default, so this one is
+        # announced instead of repaired.
+        return None
+    return _sql_literal(default.arg)
+
+
+def _walk(container: Any) -> Iterator[Any]:
+    """Every operation in the tree, including the ones inside ModifyTableOps."""
+    for operation in container.ops:
+        if isinstance(operation, ops.ModifyTableOps):
+            yield from operation.ops
+        else:
+            yield operation
+
+
+def _process_revision_directives(context_: Any, revision: Any, directives: Any) -> None:
+    """Make a new NOT NULL column applicable, and warn only when it matters.
+
+    **NOT NULL.** ``ALTER TABLE t ADD COLUMN c ... NOT NULL`` with no default is
+    rejected outright by PostgreSQL the moment the table has rows, and
+    autogenerate emits exactly that: Alembic compares against the database, so
+    it only ever sees ``server_default``, while a python-side ``default=`` lives
+    in the model and never reaches the DDL. The information is right there and
+    was being dropped.
+
+    So a scalar ``default=`` is turned into a matching ``server_default`` on the
+    ADD, and a second operation removes that default again. Both are needed: the
+    first makes the statement applicable to existing rows, the second keeps the
+    database agreeing with the model -- left behind, ``compare_server_default``
+    would propose removing it in the next revision, and every revision after.
+
+    **Renames.** Autogenerate renders a rename as a drop plus an add, which is
+    silent data loss. The revision template warns about it, but only when this
+    finds a drop and an add on the same table. It used to warn in every
+    revision, which is the same as not warning at all.
+    """
+    _HINTS["renames"].clear()
+    _HINTS["unsafe"].clear()
+
+    for script in directives:
+        upgrade_ops = script.upgrade_ops
+        if upgrade_ops is None:
+            continue
+
+        added: dict[str, set[str]] = {}
+        dropped: dict[str, set[str]] = {}
+        repaired: list[tuple[str, str, Any]] = []
+
+        for operation in _walk(upgrade_ops):
+            if isinstance(operation, ops.AddColumnOp):
+                column = operation.column
+                added.setdefault(operation.table_name, set()).add(column.name)
+                if column.nullable or column.server_default is not None:
+                    continue
+                literal = _backfill_for(column)
+                if literal is None:
+                    _HINTS["unsafe"].append(f"{operation.table_name}.{column.name}")
+                    continue
+                column.server_default = sa.DefaultClause(sa.text(literal))
+                repaired.append((operation.table_name, column.name, operation.schema))
+            elif isinstance(operation, ops.DropColumnOp):
+                dropped.setdefault(operation.table_name, set()).add(operation.column_name)
+
+        _HINTS["renames"].extend(sorted(added.keys() & dropped.keys()))
+
+        # Appended rather than spliced in beside each ADD: every column has to
+        # exist and be filled before any default is taken away again.
+        for table_name, column_name, schema in repaired:
+            upgrade_ops.ops.append(
+                ops.ModifyTableOps(
+                    table_name,
+                    [
+                        ops.AlterColumnOp(
+                            table_name,
+                            column_name,
+                            schema=schema,
+                            modify_server_default=None,
+                            existing_nullable=False,
+                        )
+                    ],
+                    schema=schema,
+                )
+            )
+
+
+def _render_item(item_type: str, obj: Any, autogen_context: AutogenContext) -> str | Literal[False]:
+    """Make sure a rendered type is a name the revision can actually resolve.
+
+    Alembic writes a user-defined type by its full dotted path and adds no
+    import for it. The revision still parses -- the name is only evaluated
+    inside ``upgrade()`` -- so the file reads as correct and fails at
+    ``alembic upgrade head`` instead, on a line that looks obviously fine.
+
+    Returning False keeps Alembic's own rendering, which preserves the type's
+    arguments. This hook is here purely for the import it registers.
+    """
+    if item_type == "type":
+        module = type(obj).__module__
+        # SQLAlchemy's own types are already covered by the `sa` alias the
+        # script template imports; anything else is somebody's code.
+        if module and not module.startswith("sqlalchemy"):
+            autogen_context.imports.add(f"import {module}")
+    return False
+
+
+def run_migrations_offline() -> None:
+    context.configure(
+        url=_database_url(),
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+        compare_type=True,
+        compare_server_default=True,
+        process_revision_directives=_process_revision_directives,
+        render_item=_render_item,
+        # The framework's own tables -- the queue, the outbox, accounts -- are
+        # created by their plugins and are not in these models. Without this,
+        # autogenerate proposes to drop them.
+        include_name=include_name,
+        # By reference: Alembic copies this dict into the one the template
+        # reads, so the hook's later writes to `_HINTS` still arrive.
+        template_args={"jfast": _HINTS},
+    )
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def _run(connection: Connection) -> None:
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        # Without these, autogenerate misses column type changes and default
+        # changes entirely -- the two edits people most often assume it caught.
+        compare_type=True,
+        compare_server_default=True,
+        process_revision_directives=_process_revision_directives,
+        render_item=_render_item,
+        # The framework's own tables -- the queue, the outbox, accounts -- are
+        # created by their plugins and are not in these models. Without this,
+        # autogenerate proposes to drop them.
+        include_name=include_name,
+        template_args={"jfast": _HINTS},
+    )
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+async def run_migrations_online() -> None:
+    section = config.get_section(config.config_ini_section, {})
+    section["sqlalchemy.url"] = _database_url()
+
+    engine = async_engine_from_config(section, prefix="sqlalchemy.", poolclass=pool.NullPool)
+    async with engine.connect() as connection:
+        await connection.run_sync(_run)
+    await engine.dispose()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    asyncio.run(run_migrations_online())

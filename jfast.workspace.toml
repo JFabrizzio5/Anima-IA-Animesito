@@ -1,0 +1,33 @@
+# JFast workspace. Generated and updated by the `jfast` CLI.
+# Ports are allocated in blocks of ten; see docs/deploy.md.
+
+[workspace]
+name = "animesito"
+base_port = 7779
+
+[[workspace.resources]]
+name = "animesito-database"
+type = "postgres"
+port = 7790
+
+[[workspace.resources]]
+name = "animesito-cache"
+type = "redis"
+port = 7792
+
+[[workspace.services]]
+name = "animesito"
+kind = "api"
+port = 7789
+path = "animesito"
+uses = [
+  { resource = "animesito-database", as = "JFAST_DB_DSN" },
+  { resource = "animesito-cache", as = "JFAST_CACHE_URL" },
+]
+
+[[workspace.services]]
+name = "animesito_web"
+kind = "spa"
+port = 7799
+path = "animesito-web"
+frontend = "react"

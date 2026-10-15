@@ -1,0 +1,109 @@
+# Animesito
+
+Built on [JFastFramework](https://github.com/JFabrizzio5/JFastFramework).
+
+## Run
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env          # then fill in the secrets
+uvicorn main:app --reload --port 7789
+```
+
+## What is enabled
+
+- `observability`
+- `metrics`
+- `database`
+- `cache`
+- `queue`
+
+Change the list in `jfast.toml`. Everything a plugin brings — middleware,
+endpoints, containers in the generated compose file — arrives and leaves with
+its name on that list.
+
+```bash
+jfast plugins list --all     # everything installable
+jfast describe --text        # what this service actually resolves to
+jfast doctor                 # config resolves, enabled plugins import
+```
+
+## What you get without writing it
+
+| Path | Purpose |
+| --- | --- |
+| `/health` | Liveness. Cheap, no dependency probing. |
+| `/ready` | Readiness. Aggregates every plugin's health check. |
+| `/info` | Plugin inventory. Disabled when `JFAST_ENV=prod`. |
+| `/metrics` | Prometheus RED metrics. |
+| `/docs` | OpenAPI UI. |
+
+## Migrations
+
+Alembic is wired to the application's own settings: `migrations/env.py` reads
+`JFAST_DB_DSN`, so a migration cannot run against a different database than the
+service. It also imports every module's models automatically, so autogenerate
+never silently produces an empty migration because of a forgotten import.
+
+```bash
+jfast exec -- alembic revision --autogenerate -m "add invoices"
+jfast exec -- alembic upgrade head
+jfast exec -- alembic downgrade -1
+jfast exec -- alembic history
+```
+
+`jfast exec --` runs the command with `.env` translated for your machine: in a
+workspace, `.env` names the database by its compose name and leaves the
+password for compose to fill in, and neither works outside compose. Without a
+`docker-compose.yml` here or one level up it changes nothing. `jfast exec --
+pytest` works the same way.
+
+**Read the generated migration before applying it.** Autogenerate is a draft:
+it renders a rename as a drop plus an add, which is silent data loss on a table
+that already has rows, and it does not write data migrations at all.
+
+## Contracts
+
+`contracts.toml` holds the rules this service holds itself to: layer
+boundaries, forbidden calls, required structure, and the invariants no checker
+can verify.
+
+```bash
+jfast contracts check      # non-zero exit on a violation -- run it in CI
+jfast contracts show --json  # what an AI agent should read before writing code
+jfast contracts render     # CONTRACTS.md, for review
+```
+
+The generated file is a floor. Fill in `owns`, `does_not_own` and the
+invariants -- those three are the value; the layer rules are table stakes.
+
+## Tests
+
+```bash
+pytest                        # modules/ and tests/
+pytest modules/invoice/tests  # one module
+```
+
+Generated module tests use a fake repository and need no database. `conftest.py`
+provides `app` and `client` fixtures built with an explicit plugin list, so a
+test cannot break because someone changed a default in `jfast.toml`.
+
+## Add a module
+
+```bash
+jfast new module invoice                      # layered, JSON
+jfast new module invoice --layout screaming   # one file per use case
+jfast new module invoice --ui htmx            # + server-rendered pages
+```
+
+Then mount it in `main.py` and generate the migration.
+
+## Deploy
+
+```bash
+jfast deploy compose -o docker-compose.yml
+jfast deploy dockerfile
+```
+
+Both are derived from the plugins enabled in `jfast.toml`. Regenerate after
+changing that list rather than editing the output.

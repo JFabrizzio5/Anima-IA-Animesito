@@ -1,0 +1,97 @@
+# The modular prompt builder: zones and their preset options.
+#
+# Ported from v1's "Constructor Modular" (public/index.html). Edit freely: add
+# an option as { label = "...", tags = "..." }. Anything not listed can be
+# searched live on Danbooru from the same zone, so presets are shortcuts, not
+# the vocabulary. Characters are searched (Danbooru + AniList), not listed.
+#
+# v1's adult presets were not carried over as presets; their tags remain one
+# search away, and the policy module checks every prompt either way.
+
+[[zones]]
+id = "outfit"
+label = "Atuendo"
+options = [
+  { label = "Ropa casual", tags = "casual clothes, sweater, jeans" },
+  { label = "Uniforme escolar", tags = "school uniform, pleated skirt" },
+  { label = "Office lady", tags = "office lady, pencil skirt, glasses" },
+  { label = "Vestido de novia", tags = "wedding dress, veil" },
+  { label = "Maid", tags = "maid, maid headdress, frills" },
+  { label = "Conejita", tags = "playboy bunny, rabbit ears, fishnet pantyhose" },
+  { label = "Enfermera", tags = "nurse, nurse cap" },
+  { label = "Cyberpunk", tags = "cyberpunk, techwear, glowing accents" },
+  { label = "Armadura de fantasía", tags = "fantasy, armor, breastplate, cape" },
+  { label = "Kimono", tags = "japanese clothes, kimono, obi" },
+  { label = "Bikini", tags = "bikini, swimsuit" },
+  { label = "Hoodie", tags = "hoodie, hood down, sleeves past wrists" },
+  { label = "Gafas", tags = "glasses" },
+  { label = "Choker", tags = "choker" },
+  { label = "Orejas de gato", tags = "cat ears, animal ears" },
+]
+
+[[zones]]
+id = "pose"
+label = "Pose / acción"
+options = [
+  { label = "De pie, mirando al frente", tags = "standing, looking at viewer" },
+  { label = "Sentada, piernas cruzadas", tags = "sitting, on chair, crossed legs" },
+  { label = "De rodillas, mirando arriba", tags = "kneeling, looking up" },
+  { label = "En cuclillas", tags = "squatting, looking at viewer" },
+  { label = "Estirándose", tags = "stretching, arms up" },
+  { label = "Acostada bocabajo", tags = "lying, on stomach, looking at viewer" },
+  { label = "Selfie", tags = "selfie, holding phone" },
+  { label = "Con audífonos", tags = "headphones, listening to music" },
+  { label = "Comiendo / bebiendo", tags = "eating, holding cup, drinking" },
+  { label = "Pose dinámica de acción", tags = "dynamic pose, action, motion blur" },
+  { label = "Mirando atrás", tags = "looking back, from behind" },
+  { label = "Pareja yuri: abrazo", tags = "2girls, yuri, hug, holding hands" },
+]
+
+[[zones]]
+id = "expression"
+label = "Expresión"
+options = [
+  { label = "Feliz", tags = "smile, happy, open mouth" },
+  { label = "Tímida", tags = "shy, blush, looking away" },
+  { label = "Seria", tags = "serious, closed mouth" },
+  { label = "Sonrisa maliciosa", tags = "smirk, evil smile" },
+  { label = "Llorando", tags = "tears, crying" },
+  { label = "Enojada", tags = "angry, glaring, frown" },
+  { label = "Sorprendida", tags = "surprised, wide-eyed, open mouth" },
+  { label = "Somnolienta", tags = "sleepy, half-closed eyes" },
+  { label = "Guiño", tags = "one eye closed, wink, v" },
+]
+
+[[zones]]
+id = "environment"
+label = "Entorno / fondo"
+options = [
+  { label = "Habitación", tags = "bedroom, bed, indoors" },
+  { label = "Bosque", tags = "outdoors, forest, nature, sunlight" },
+  { label = "Playa", tags = "beach, ocean, sand, blue sky" },
+  { label = "Piscina", tags = "pool, water" },
+  { label = "Ciudad de noche", tags = "cityscape, night, neon lights" },
+  { label = "Azotea de noche", tags = "rooftop, night, city lights" },
+  { label = "Salón de clases", tags = "classroom, desk, chalkboard" },
+  { label = "Onsen", tags = "onsen, steam, rock" },
+  { label = "Cerezos en flor", tags = "cherry blossoms, petals, spring" },
+  { label = "Mazmorra", tags = "dungeon, chain, stone wall, dark" },
+  { label = "Fondo simple", tags = "simple background, white background" },
+]
+
+[[zones]]
+id = "extra"
+label = "Extras / estilo"
+options = [
+  { label = "Iluminación cinemática", tags = "cinematic lighting, depth of field" },
+  { label = "Ojos detallados", tags = "beautiful detailed eyes, detailed eyes" },
+  { label = "Fondo detallado", tags = "detailed background, scenery" },
+  { label = "Iluminación de estudio", tags = "volumetric lighting, rim lighting" },
+  { label = "Hoja de personaje", tags = "character sheet, reference sheet, multiple views" },
+  { label = "Chibi", tags = "chibi" },
+  { label = "Boceto monocromo", tags = "sketch, monochrome, lineart" },
+  { label = "Estilo anime 90s", tags = "1990s (style), retro artstyle" },
+  { label = "Panel de manga", tags = "comic, manga, multiple views" },
+  { label = "Cabello despeinado", tags = "messy hair" },
+  { label = "Piel brillante / sudor", tags = "sweat, shiny skin" },
+]
