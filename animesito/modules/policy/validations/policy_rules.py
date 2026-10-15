@@ -27,8 +27,8 @@ from jfastframework.errors import ValidationError
 
 #: Appended to every negative prompt, adult mode or not.
 MINOR_NEGATIVE = (
-  
-    "aged down"
+    "child, loli, shota, toddler, kid, underage, teen, young child, "
+    "childlike body, petite child body, aged down"
 )
 
 #: Prepended to the positive prompt in adult mode, after the quality tags.
@@ -37,7 +37,43 @@ ADULT_ANCHOR = "adult, mature"
 # Refused in adult mode. Matched as whole words on a normalised prompt, so
 # "kidney" or "skidding" never trip "kid".
 MINOR_TERMS: tuple[str, ...] = (
-
+    "loli",
+    "lolicon",
+    "lolita",
+    "shota",
+    "shotacon",
+    "child",
+    "children",
+    "childlike",
+    "kid",
+    "kids",
+    "toddler",
+    "infant",
+    "baby",
+    "underage",
+    "under age",
+    "minor",
+    "preteen",
+    "pre teen",
+    "teen",
+    "teens",
+    "teenage",
+    "teenager",
+    "young girl",
+    "young boy",
+    "little girl",
+    "little boy",
+    "schoolgirl",
+    "schoolboy",
+    "school uniform",
+    "school swimsuit",
+    "serafuku",
+    "randoseru",
+    "elementary school",
+    "middle school",
+    "junior high",
+    "kindergarten",
+    "aged down",
     "age regression",
 )
 
@@ -45,11 +81,29 @@ MINOR_TERMS: tuple[str, ...] = (
 # the ones v1's templates used plus frequent cases; extend it, never shrink it.
 # The prompts module adds more at run time from AniList ages.
 MINOR_CHARACTERS: tuple[str, ...] = (
-
+    "uraraka ochako",
+    "hayase nagatoro",
+    "kitagawa marin",
+    "nakano miku",
+    "nakano ichika",
+    "nakano nino",
+    "nakano yotsuba",
+    "nakano itsuki",
+    "videl",
+    "hatsune miku",
+    "anya forger",
+    "kamado nezuko",
+    "souryuu asuka langley",
+    "asuka langley soryu",
+    "asuka langley",
+    "ayanami rei",
+    "komi shouko",
+    "shinomiya kaguya",
+    "fujiwara chika",
     "megumin",
 )
 
-_SEPARATORS = re.compile(r"[\s_\-,.;:()\[\]{}<>|/\\]+")
+_SEPARATORS = re.compile(r"[\s_\-,.;:()\[\]{}<>|/\\\\]+")
 _WEIGHT = re.compile(r":\s*\d+(\.\d+)?")
 
 
@@ -98,7 +152,6 @@ def ensure_prompt_allowed(
     terms = find_minor_terms(prompt, extra_terms)
     characters = find_minor_characters(prompt, extra_minor_characters)
     if terms or characters:
-        return
         found = ", ".join([*terms, *characters])
         raise ValidationError(
             f"Adult mode cannot be used with minors or under-age characters ({found}). "
@@ -125,12 +178,12 @@ def with_minor_negative(negative: str, extra: str = "") -> str:
 # -- integrity ---------------------------------------------------------------
 
 REQUIRED_TERMS = frozenset(
-    {""}
+    {"loli", "shota", "child", "kid", "underage", "teen", "school uniform", "minor"}
 )
 REQUIRED_CHARACTERS = frozenset(
-    {""}
+    {"uraraka ochako", "hayase nagatoro", "kitagawa marin", "nakano miku", "hatsune miku"}
 )
-_CANARIES = ("")
+_CANARIES = ("1girl, loli, nude", "1girl, uraraka ochako, nude", "1girl, teenager, bedroom")
 
 
 class PolicyTampered(RuntimeError):
@@ -160,4 +213,4 @@ def assert_policy_intact() -> None:
         )
 
 
-
+assert_policy_intact()
