@@ -1,6 +1,9 @@
 # LF everywhere: this repo lives in WSL, and a Windows git/IDE with
 # core.autocrlf=true would otherwise rewrite scripts/*.sh to CRLF.
 * text=auto eol=lf
+# Run by cmd.exe / Windows PowerShell, which expect CRLF.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
 *.png binary
 *.webp binary
 *.jpg binary
