@@ -35,9 +35,14 @@ def image_models(root: Path) -> None:
     if not root.is_dir():
         print("  folder not found")
         return
-    rows = [(name, resolve(CKPT, name, read_traits(path))) for name, path in _files(root, "checkpoints", ".safetensors")]
+    rows = [
+        (name, resolve(CKPT, name, read_traits(path)))
+        for name, path in _files(root, "checkpoints", ".safetensors")
+    ]
     for folder in ("diffusion_models", "unet"):
-        rows += [(name, resolve(GGUF, name, ModelTraits())) for name, _ in _files(root, folder, ".gguf")]
+        rows += [
+            (name, resolve(GGUF, name, ModelTraits())) for name, _ in _files(root, folder, ".gguf")
+        ]
     for name, choice in rows:
         if choice is None:
             print(f"  -  {name}  (not a txt2img model the app drives)")
@@ -56,7 +61,7 @@ def llm_models() -> None:
     except OSError:
         print("Ollama: not running, models not listed (Iniciar.bat starts it)")
         return
-    print("Ollama models (\"Mejorar con IA\")")
+    print('Ollama models ("Mejorar con IA")')
     for item in items:
         model = LlmModel(
             name=str(item.get("name")),
@@ -65,13 +70,17 @@ def llm_models() -> None:
             capabilities=tuple(item.get("capabilities") or ()),
         )
         # Same filter as GET /assistant/models.
-        hidden = (
-            "embedding model" if model.is_embedding
-            else "reasoning model" if model.is_reasoning
-            else f"over {max_gb} GB" if model.size_gb > max_gb
-            else None
+        hidden = None
+        if model.is_embedding:
+            hidden = "embedding model"
+        elif model.is_reasoning:
+            hidden = "reasoning model"
+        elif model.size_gb > max_gb:
+            hidden = f"over {max_gb} GB"
+        print(
+            f"  {'-' if hidden else '+'}  {model.name}  {model.size_gb} GB"
+            + (f"  (hidden: {hidden})" if hidden else "")
         )
-        print(f"  {'-' if hidden else '+'}  {model.name}  {model.size_gb} GB" + (f"  (hidden: {hidden})" if hidden else ""))
 
 
 if __name__ == "__main__":

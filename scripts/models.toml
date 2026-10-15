@@ -1,0 +1,158 @@
+# Models the installer can fetch (scripts/fetch_models.py), by group.
+#
+# Every file is pinned to a repo commit, a size and a sha256 from the Hugging
+# Face API, and each one matched byte for byte a working install on
+# 2026-10-15. A file already present under `file` or one of `aliases` (same
+# folder) is never downloaded again, and an existing file is never replaced.
+#
+# `license` is what the source repo declares. Re-uploads (not the author's
+# repo) may declare something other than the author's terms: check before
+# commercial use. Left out on purpose: waiREALCN_v20 (no copy left on Hugging
+# Face), and the video / Kontext / redcraft files the app does not drive.
+
+[groups.base]
+label = "WAI Illustrious (main anime model) + dolphin-mistral for 'Mejorar con IA'"
+default = true
+
+[groups.anime]
+label = "NoobAI v-pred, Animagine XL 3.1, Pony Diffusion V6"
+
+[groups.realistic]
+label = "RealVisXL V4.0, Juggernaut XL v9"
+
+[groups.flux]
+label = "Flux dev Q5_K_S (GGUF) + text encoders + VAE + adult LoRA + ComfyUI-GGUF node"
+
+[groups.extra]
+label = "Flux dev Q8_0 (needs more VRAM), dolphin-llama3"
+
+[[files]]
+file = "waiIllustriousSDXL_v170.safetensors"
+folder = "checkpoints"
+group = "base"
+url = "https://huggingface.co/LyliaEngine/waiIllustriousSDXL_v170/resolve/5ef4e2da7173a160ad04aebcaa2fdcd6d20ed792/waiIllustriousSDXL_v170.safetensors"
+size = 6938040682
+sha256 = "f116b0c78ff441467b0cdc8f1936e1ed18ea31e9997c7b132b1b8db533f0bd04"
+license = "cdla-permissive-2.0 (re-upload)"
+
+[[files]]
+# The name is honest: the file v1 saved as noobaiXLNAIXL_vEPSILON is this
+# v-prediction model (the app reads that from the header either way).
+file = "NoobAI-XL-Vpred-v1.0.safetensors"
+folder = "checkpoints"
+group = "anime"
+aliases = ["noobaiXLNAIXL_vEPSILON.safetensors"]
+url = "https://huggingface.co/Laxhar/noobai-XL-Vpred-1.0/resolve/66aa55e3469c27c29a89813cd35dd95fb7485fa1/NoobAI-XL-Vpred-v1.0.safetensors"
+size = 7105350110
+sha256 = "ea349eeae87ca8d25ba902c93810f7ca83e5c82f920edf12f273af004ae02819"
+license = "fair-ai-public-license-1.0-sd"
+
+[[files]]
+file = "animagine-xl-3.1.safetensors"
+folder = "checkpoints"
+group = "anime"
+url = "https://huggingface.co/cagliostrolab/animagine-xl-3.1/resolve/483f0c322568ed13697ed01dd0be07204746d12b/animagine-xl-3.1.safetensors"
+size = 6938325776
+sha256 = "e3c47aedb06418c6c331443cd89f2b3b3b34b7ed2102a3d4c4408a8d35aad6b0"
+license = "openrail++"
+
+[[files]]
+file = "ponyDiffusionV6XL_v6StartWithThisOne.safetensors"
+folder = "checkpoints"
+group = "anime"
+url = "https://huggingface.co/LyliaEngine/Pony_Diffusion_V6_XL/resolve/14885f1c01d7723bcbf676773def286c1fd733bc/ponyDiffusionV6XL_v6StartWithThisOne.safetensors"
+size = 6938041050
+sha256 = "67ab2fd8ec439a89b3fedb15cc65f54336af163c7eb5e4f2acc98f090a29b0b3"
+license = "cdla-permissive-2.0 (re-upload)"
+
+[[files]]
+file = "RealVisXL_V4.0.safetensors"
+folder = "checkpoints"
+group = "realistic"
+url = "https://huggingface.co/SG161222/RealVisXL_V4.0/resolve/26dfe44930964cd70d0a817b6d1cc945c130e38d/RealVisXL_V4.0.safetensors"
+size = 6938040706
+sha256 = "912c9dc74f5855175c31a7993f863a043ac8dcc31732b324cd05d75cd7e16844"
+license = "openrail++"
+
+[[files]]
+file = "Juggernaut-XL_v9.safetensors"
+folder = "checkpoints"
+group = "realistic"
+url = "https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/resolve/cf419233522daa0b9ea36c3aff98fa2cab1fb0fb/Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors"
+size = 7105348188
+sha256 = "c9e3e68f89b8e38689e1097d4be4573cf308de4e3fd044c64ca697bdb4aa8bca"
+license = "creativeml-openrail-m"
+
+[[files]]
+file = "flux1-dev-Q5_K_S.gguf"
+folder = "diffusion_models"
+group = "flux"
+url = "https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/3c60ac659f4b1f2ab3ca8bd4488272069b36a148/flux1-dev-Q5_K_S.gguf"
+size = 8285267232
+sha256 = "aa76146ca0f1b09c67e0c3fcef18be3a375837ecd5aaa021d3e9ebc558bd68f9"
+license = "flux-1-dev-non-commercial-license"
+
+[[files]]
+file = "clip_l.safetensors"
+folder = "text_encoders"
+group = "flux"
+url = "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/6af2a98e3f615bdfa612fbd85da93d1ed5f69ef5/clip_l.safetensors"
+size = 246144152
+sha256 = "660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd"
+license = "apache-2.0"
+
+[[files]]
+file = "t5xxl_fp8_e4m3fn_scaled.safetensors"
+folder = "text_encoders"
+group = "flux"
+url = "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/6af2a98e3f615bdfa612fbd85da93d1ed5f69ef5/t5xxl_fp8_e4m3fn_scaled.safetensors"
+size = 5157348688
+sha256 = "a498f0485dc9536735258018417c3fd7758dc3bccc0a645feaa472b34955557a"
+license = "apache-2.0"
+
+[[files]]
+# Same file as FLUX.1-schnell's ae.safetensors, which needs a Hugging Face login.
+file = "ae.safetensors"
+folder = "vae"
+group = "flux"
+url = "https://huggingface.co/Comfy-Org/Lumina_Image_2.0_Repackaged/resolve/5b072540ef86570fecb8249c505f23d5bdeb88cd/split_files/vae/ae.safetensors"
+size = 335304388
+sha256 = "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38"
+license = "apache-2.0"
+
+[[files]]
+# profiles.toml applies it to Flux in adult mode when installed.
+file = "flux_lustly-ai_v1.safetensors"
+folder = "loras"
+group = "flux"
+url = "https://huggingface.co/lustlyai/Flux_Lustly.ai_Uncensored_nsfw_v1/resolve/f3d088d9b3ecbcb7fd24dac5154b7d8391fbd309/flux_lustly-ai_v1.safetensors"
+size = 343805152
+sha256 = "b1470828b182a72ac2c1b75eed8f20b21a096555bf3a6cdac29f5ed530ca5ebe"
+license = "creativeml-openrail-m"
+
+[[files]]
+file = "flux1-dev-Q8_0.gguf"
+folder = "diffusion_models"
+group = "extra"
+url = "https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/3c60ac659f4b1f2ab3ca8bd4488272069b36a148/flux1-dev-Q8_0.gguf"
+size = 12708281504
+sha256 = "129032f32224bf7138f16e18673d8008ba5f84c1ec74063bf4511a8bb4cf553d"
+license = "flux-1-dev-non-commercial-license"
+
+# Custom nodes, unpacked into ComfyUI/custom_nodes/<name>; their requirements go
+# into ComfyUI's own Python (venv\Scripts or the portable python_embeded).
+[[nodes]]
+name = "ComfyUI-GGUF"
+group = "flux"
+url = "https://github.com/city96/ComfyUI-GGUF/archive/6ea2651e7df66d7585f6ffee804b20e92fb38b8a.zip"
+
+# Pulled through Ollama's API, so Ollama must be running.
+[[ollama]]
+name = "dolphin-mistral:latest"
+group = "base"
+size = 4108940323
+
+[[ollama]]
+name = "dolphin-llama3:latest"
+group = "extra"
+size = 4661235994

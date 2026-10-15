@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # One-time setup inside WSL: Python venv, frontend packages, .env files,
-# database, and a report of the local models the app will offer.
+# database, the models (scripts/models.toml) and a report of what the app offers.
 #
-#   bash scripts/install.sh [--comfy-models DIR]
+#   bash scripts/install.sh [--comfy-models DIR] [--models SETS]
 #
 # DIR is ComfyUI's models folder as WSL sees it (/mnt/c/...). Default: what
 # animesito/.env already says, else Desktop\ComfyUI\models of the Windows user.
-# Safe to run again: existing .env files are kept, only what is missing is added.
+# SETS is a comma list of model sets from scripts/models.toml, 'all' or 'none';
+# without it the installer asks (or takes the default set when not interactive).
+# Safe to run again: existing .env files are kept, only what is missing is added,
+# and an interrupted model download resumes.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -28,9 +31,11 @@ set_env() {
 }
 
 comfy_models=""
+model_sets=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --comfy-models) comfy_models="${2:?--comfy-models needs a directory}"; shift 2 ;;
+    --models) model_sets="${2:?--models needs a comma list, all or none}"; shift 2 ;;
     *) fail "unknown argument: $1" ;;
   esac
 done
@@ -124,10 +129,21 @@ cd "$ROOT/animesito"
 
 step "Frontend packages (animesito-web)"
 cd "$ROOT/animesito-web"
-npm ci --no-audit --no-fund
+# npm ci deletes node_modules first, which breaks a running Vite: only when stale.
+if [ ! -f node_modules/.package-lock.json ] || [ package-lock.json -nt node_modules/.package-lock.json ]; then
+  npm ci --no-audit --no-fund
+else
+  echo "node_modules up to date"
+fi
+
+step "Models (ComfyUI files, custom nodes, Ollama)"
+cd "$ROOT/animesito"
+fetch_args=("$comfy_models")
+[ -z "$model_sets" ] || fetch_args+=(--groups "$model_sets")
+.venv/bin/python "$ROOT/scripts/fetch_models.py" "${fetch_args[@]}" \
+  || echo "WARNING: not every model was installed; run the installer again to resume."
 
 step "Local models"
-cd "$ROOT/animesito"
 PYTHONPATH=. .venv/bin/python "$ROOT/scripts/models_report.py" "$comfy_models"
 
 step "Done"

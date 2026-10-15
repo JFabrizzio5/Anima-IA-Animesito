@@ -1,7 +1,8 @@
 <#
 Windows side of Animesito. Called by Instalar.bat and Iniciar.bat.
 
-  install  runs scripts/install.sh inside WSL, pointing it at ComfyUI's models
+  install  runs scripts/install.sh inside WSL, pointing it at ComfyUI's models;
+           it downloads the model sets chosen with -Models (or asks)
   start    starts ComfyUI and Ollama if they are down, then the app, and opens it
 
 The repo lives inside a WSL distro and this runs from its \\wsl.localhost (or
@@ -12,7 +13,9 @@ param(
     [Parameter(Mandatory = $true)][ValidateSet('install', 'start')][string]$Action,
     # ComfyUI folder on Windows. Default: the parent of JFAST_COMFY_MODELS_DIR in
     # animesito\.env, else Desktop\ComfyUI.
-    [string]$ComfyDir
+    [string]$ComfyDir,
+    # Model sets from scripts/models.toml: comma list, 'all' or 'none'. Default: ask.
+    [string]$Models
 )
 $ErrorActionPreference = 'Stop'
 
@@ -138,6 +141,9 @@ switch ($Action) {
         } else {
             Write-Warning "ComfyUI not found in $comfy; run again with -ComfyDir <folder>."
         }
+        if ($Models) { $command += @('--models', $Models) }
+        # Ollama models are pulled through its API.
+        Start-Ollama
         Invoke-Wsl $command
     }
     'start' {
